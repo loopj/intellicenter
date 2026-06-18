@@ -9,7 +9,11 @@ from homeassistant.components.sensor import (
     SensorStateClass,
 )
 from homeassistant.config_entries import ConfigEntry
-from homeassistant.const import CONCENTRATION_PARTS_PER_MILLION, UnitOfPower
+from homeassistant.const import (
+    CONCENTRATION_PARTS_PER_MILLION,
+    PERCENTAGE,
+    UnitOfPower,
+)
 from homeassistant.core import HomeAssistant
 
 from . import PoolEntity
@@ -162,6 +166,7 @@ async def async_setup_entry(
                             controller,
                             obj,
                             device_class=None,
+                            unit_of_measurement=PERCENTAGE,
                             attribute_key=PHTNK_ATTR,
                             name="+ (Ph Tank Level)",
                         )
@@ -173,6 +178,7 @@ async def async_setup_entry(
                             controller,
                             obj,
                             device_class=None,
+                            unit_of_measurement=PERCENTAGE,
                             attribute_key=ORPTNK_ATTR,
                             name="+ (ORP Tank Level)",
                         )
@@ -226,6 +232,10 @@ class PoolSensor(PoolEntity, SensorEntity):
 
         if self._rounding_factor:
             value = str(int(round(int(value) / self._rounding_factor) * self._rounding_factor))
+
+        # IntelliChem tank levels report a 1-7 range that maps to 0-100% (1=0%, 7=100%)
+        elif self._attribute_key in (PHTNK_ATTR, ORPTNK_ATTR):
+            value = str(round((int(value) - 1) / 6 * 100))
 
         return value
 
